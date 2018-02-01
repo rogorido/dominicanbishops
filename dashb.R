@@ -65,10 +65,18 @@ ui <- dashboardPage( skin = "gree",
         
         # Edad Moderna  
         tabItem(tabName = "t_org_edm",
-                selectInput("seleccionar_orden", label = h3("Select box"), 
+                selectInput("seleccionar_orden", label = h3("Seleccionar orden"), 
                             choices = ordenes_lista,
                             selected = 'O.P.'),
-                box(title="Tabla", DT::dataTableOutput("mytable4"))
+                tabBox(
+                    id = "tabset1", height = "100", width="100",
+                    tabPanel("Tab1",
+                             #box(title="Tabla", DT::dataTableOutput("mytable4"))),
+                             DT::dataTableOutput("mytable4")),
+                    tabPanel("Tab2", box(title = "Duración de obispados", width = "100%",
+                                         leafletOutput("mymap2", height = 600)))
+                )
+                
                 )
     )
   )
@@ -88,6 +96,15 @@ server <- function(input, output) {
                              options = providerTileOptions(noWrap = TRUE)
                              ) %>%
             addCircleMarkers(lat = ~latitude, lng= ~longitude, radius = ~total)
+    })
+
+    output$mymap2 <- renderLeaflet({
+        em_dioc <- actualizar_em_orden(input$seleccionar_orden)
+        leaflet(em_dioc) %>%
+            addProviderTiles(providers$Stamen.TonerLite,
+                             options = providerTileOptions(noWrap = TRUE)
+                             ) %>%
+            addCircleMarkers(lat = ~latitude, lng= ~longitude, radius = ~count)
     })
 
     output$mytable1 <- renderDataTable({
