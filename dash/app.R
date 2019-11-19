@@ -12,24 +12,33 @@ library(htmltools) # para usar htmlEscape con leaflet
 
 setwd("/home/igor/geschichte/artikel/obisposdominicos/analisis/dash/")
 
-source("./functions.R")
+# usamos esto para saber por ahora si estamos en mi ordenador
+# o en el servidor
+servidor = Sys.info()["nodename"]
 
-con <- dbConnect(drv= "PostgreSQL",
-                 dbname = "dominicos",
-                 user="igor",
-                 host="localhost")
+if ( servidor == "venuso" ) {
+    source("./functions.R")
 
-source("./loaddata/load_general.R")
-source("./loaddata/load_diocesis.R")
-source("./loaddata/load_orrgs.R")
-source("./loaddata/load_confesionalization.R")
+    con <- dbConnect(drv= "PostgreSQL",
+                     dbname = "dominicos",
+                     user="igor",
+                     host="localhost")
+
+    source("./loaddata/load_general.R")
+    source("./loaddata/load_diocesis.R")
+    source("./loaddata/load_orrgs.R")
+    source("./loaddata/load_confesionalization.R")
+}
+else {
+    load(file = "datosgenerales.RData")    
+}
 
 # aquí está los tabs del dashboardbody
 source("./tabitems.R", local = TRUE)
 
 save.image(file = "datosgenerales.RData")
 
-# esto sirve para q muestre errores en la consola de firefox 
+# to show errors in firefox console 
 #options(shiny.trace = TRUE)
 
 ui <- dashboardPage( skin = "gree",
