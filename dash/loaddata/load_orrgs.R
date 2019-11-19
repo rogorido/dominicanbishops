@@ -67,6 +67,15 @@ datossql <- getSQL("./sqls/ops_periplos4.sql")
 ops_periplos_edm <- dbGetQuery(con, datossql)
 
 #######################################
+# Periplos por diócesis (clusters) 
+#######################################
+
+periplos_clusters_edm <- dbGetQuery(con, "SELECT * from related_dioceses_edm_ss_sa;")
+# lo mismo pero solo con los OPs.
+periplos_clusters_edm_ops <- dbGetQuery(con, "SELECT * from related_dioceses_edm_ops;")
+
+
+#######################################
 # Series temporales 
 #######################################
 # creamos un df general donde está separados los OFMs

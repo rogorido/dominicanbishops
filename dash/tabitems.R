@@ -1,5 +1,7 @@
 ## IMPORTANTE: pensar si meter los tabpanel en otro fichero como
-## tengo en lo de capprov. 
+## tengo en lo de capprov.
+
+# font-awesome: https://fontawesome.com/icons?d=gallery&m=free 
 
 tabgeneral <-
     tabItem(tabName = "general",
@@ -23,18 +25,44 @@ tabgeneral <-
 tabdiocgeneral <- 
     tabItem(tabName = "d_general",
             tabsetPanel(id = "tabset1",# height = "100", width="100",
-                        tabPanel("Con seculares",
+                        tabPanel("Con seculares", icon = icon("th"),
                                  h4("Periodo 1200-1800"),
                                  DT::dataTableOutput("bis_per_dioc")),
                         tabPanel("Con seculares (mapa)",
+                                 icon = icon("globe-africa", lib = "font-awesome"),
                                  h4("Periodo 1200-1800"),
                                  leafletOutput("bis_per_dioc_mapa", height = 1000)),
-                        tabPanel("Seculares (por siglos)",
+                        tabPanel("Seculares (por siglos)", icon = icon("th"),
                                  h4("Periodo 1200-1800"),
                                  DT::dataTableOutput("bis_per_dioc_por_siglos")),
-                        tabPanel("Santa sede", leafletOutput("dioc_santasede", height=1000))
+                        tabPanel("Santa sede",
+                                 icon = icon("globe-africa", lib = "font-awesome"),
+                                 leafletOutput("dioc_santasede", height=1000))
                         ))
 
+tabindividual <- 
+    tabItem(tabName = "d_individual",
+            fluidRow(column(4,
+                            pickerInput("seleccionar_diocs",
+                                        label = 'Seleccionar diócesis',
+                                        choices = dioceses_lista_ids,
+                                        choicesOpt = list(content = dioceses_lista),
+                                        multiple = FALSE, #inline = TRUE,                       
+                                        options = list(
+                                            `actions-box` = TRUE,`live-search` = TRUE),
+                                        selected = '497')), # selecionamos Aarhus por nada especial
+                     column(8,
+                            h3(htmlOutput("nombrediocesis_url")))),
+            hr(),
+            leafletOutput("ind_dioc_mapa"),
+            hr(),
+            fluidRow(valueBoxOutput("ind_total_obispos_emd"),
+                     valueBoxOutput("ind_total_obispos_edm")),
+            hr(),
+            fluidRow(column(3,
+                            DT::dataTableOutput("ind_tipos_obispos_emd")),
+                     column(3, 
+                            DT::dataTableOutput("ind_tipos_obispos_edm"))))
 
 tabsecnosec <- 
     tabItem(tabName = "d_secnosec",
@@ -64,17 +92,15 @@ tabdioc_orrg <-
                                  h4("Diócesis en las que no hay una orden determinada"),
                                  h4("Con top10 de órdenes religiosas de la Edad Moderna"),
                                  hr(),
-                                 fluidRow(column(2,
-                                                 h4("Seleccionar orden"),
-                                                 selectInput("seleccionar_orrg_sin_dioc_emd",
-                                                             label = 'Seleccionar orden',
-                                                             choices = orrg_sin_dioc_emd_lista,
-                                                             selected = 'O.P.')),
-                                          column(3,
+                                 h4("Seleccionar orden"),
+                                 selectInput("seleccionar_orrg_sin_dioc_emd",
+                                             label = 'Seleccionar orden',
+                                             choices = orrg_sin_dioc_emd_lista,
+                                             selected = 'O.P.'),
+                                 fluidRow(column(6,
                                                  h4("Datos generales"),
                                                  DT::dataTableOutput("orrg_sin_dioc_emd")),
-                                          
-                                          column(3,
+                                          column(6,
                                                  h4("Datos agregados"),
                                                  DT::dataTableOutput("orrg_sin_dioc_emd_agregados"))),
                                  hr(),
@@ -83,17 +109,15 @@ tabdioc_orrg <-
                                  h4("Diócesis en las que no hay una orden determinada"),
                                  h4("Con top10 de órdenes religiosas de la Edad Moderna"),
                                  hr(),
-                                 fluidRow(column(2,
-                                                 h4("Seleccionar orden"),
-                                                 selectInput("seleccionar_orrg_sin_dioc_edm",
-                                                             label = 'Seleccionar orden',
-                                                             choices = orrg_sin_dioc_edm_lista,
-                                                             selected = 'O.P.')),
-                                          column(3,
+                                 h4("Seleccionar orden"),
+                                 selectInput("seleccionar_orrg_sin_dioc_edm",
+                                             label = 'Seleccionar orden',
+                                             choices = orrg_sin_dioc_edm_lista,
+                                             selected = 'O.P.'),
+                                 fluidRow(column(6,
                                                  h4("Datos generales"),
                                                  DT::dataTableOutput("orrg_sin_dioc_edm")),
-                                          
-                                          column(3,
+                                          column(6,
                                                  h4("Datos agregados"),
                                                  DT::dataTableOutput("orrg_sin_dioc_edm_agregados"))),
                                  hr(),
@@ -271,10 +295,37 @@ tab_orrg_periplos <-
                                  DT::dataTableOutput("periplospares_emd_ss_sa")),
                         tabPanel("Pares de diócesis (edm)",
                                  DT::dataTableOutput("periplospares_edm_ss_sa")),
-                        tabPanel("OPs 1200-1800",
+                        tabPanel("OPs (1200-1800)",
                                  DT::dataTableOutput("ops_periplos_emd")),
-                        tabPanel("OPs Edad Moderna)",
-                                 DT::dataTableOutput("ops_periplos_edm"))
+                        tabPanel("OPs (Edad Moderna)",
+                                 DT::dataTableOutput("ops_periplos_edm")),
+                        tabPanel("Clusters (frailes, edad moderna)",
+                                 pickerInput("seleccionar_diocs_periplos_clusters",
+                                             label = 'Seleccionar diócesis',
+                                             choices = dioceses_lista_ids,
+                                             choicesOpt = list(content = dioceses_lista),
+                                             multiple = FALSE, #inline = TRUE,                       
+                                             options = list(
+                                                 `actions-box` = TRUE,`live-search` = TRUE),
+                                             selected = '497'), # selecionamos Aarhus por nada especial
+                                 DT::dataTableOutput("periplos_clusters_edm"),
+                                 hr(),
+                                 leafletOutput("periplos_clusters_edm_mapa")),
+                        tabPanel("Clusters (OPs, edad moderna)",
+                                 hr(),
+                                 DT::dataTableOutput("periplos_clusters_edm_ops_totales"),
+                                 hr(),
+                                 pickerInput("seleccionar_diocs_periplos_clusters_ops",
+                                             label = 'Seleccionar diócesis',
+                                             choices = dioceses_lista_ids,
+                                             choicesOpt = list(content = dioceses_lista),
+                                             multiple = FALSE, #inline = TRUE,                       
+                                             options = list(
+                                                 `actions-box` = TRUE,`live-search` = TRUE),
+                                             selected = '497'), # selecionamos Aarhus por nada especial
+                                 DT::dataTableOutput("periplos_clusters_edm_ops"),
+                                 hr(),
+                                 leafletOutput("periplos_clusters_edm_ops_mapa"))
                         ))
 
 tab_orrg_motivosfin <- 
@@ -345,61 +396,59 @@ tab_cnf2 <-
 
 tab_seriestemporales <- 
     tabItem(tabName = "o_series",
-            tabsetPanel(id="tabset12",
-                        tabPanel("EDM: OFMs separados", 
-                                 pickerInput("orrg_series_edm_general",
-                                             label = 'Seleccionar orden',
-                                             choices = orrg_series_edm_general_lista,
-                                             multiple = TRUE,
-                                             options = list(
-                                                 `actions-box` = TRUE, 
-                                                 size = 10,
-                                                 `selected-text-format` = "count > 7"
-                                             ),
-                                             selected = 'O.P.'),
-                                 hr(),
-                                 h4("Serie general"),
-                                 plotOutput("orrg_series_edm_general"),
-                                 hr(),
-                                 h4("Por países"),
-                                 plotOutput("orrg_series_edm_general_porpaises")),
-                        tabPanel("EDM: OFMs unidos", 
-                                 selectInput("orrg_series_unido",
-                                             label = 'Seleccionar orden',
-                                             choices = orrg_series_edm_unido_lista,
-                                             selected = 'O.P.'),
-                                 hr(),
-                                 h4("Serie general"),
-                                 plotOutput("orrg_series_general"),
-                                 hr(),
-                                 h4("Por países"),
-                                 plotOutput("orrg_series_general_porpaises")),
-                        tabPanel("1200-1800: OFMs separados", 
-                                 selectInput("orrg_series_emd_general",
-                                             label = 'Seleccionar orden',
-                                             choices = orrg_series_emd_general_lista,
-                                             selected = 'O.P.'),
-                                 hr(),
-                                 h4("Serie general"),
-                                 plotOutput("orrg_series_emd_general"),
-                                 hr(),
-                                 h4("Por países"),
-                                 plotOutput("orrg_series_emd_general_porpaises")),
-                        tabPanel("1200-1800: OFMs unidos", 
-                                 selectInput("orrg_series_emd_unido",
-                                             label = 'Seleccionar orden',
-                                             choices = orrg_series_emd_unido_lista,
-                                             selected = 'O.P.'),
-                                 hr(),
-                                 h4("Serie unidos"),
-                                 plotOutput("orrg_series_emd_unido"),
-                                 hr(),
-                                 h4("Por países"),
-                                 plotOutput("orrg_series_emd_unido_porpaises")
-                                 )))
+            fluidRow(
+                column(3, 
+                       pickerInput("seleccionar_orrg_series",
+                                   label = 'Seleccionar órdenes',
+                                   choices = orrg_lista,
+                                   multiple = TRUE,
+                                   options = list(
+                                       `actions-box` = TRUE, 
+                                       size = 10,
+                                       `selected-text-format` = "count > 7"),
+                                   selected = 'O.P.')),
+                column(3, 
+                       pickerInput("seleccionar_orrg_series_paises",
+                                   label = 'Seleccionar países',
+                                   choices = lista_paises_todos,
+                                   multiple = TRUE,
+                                   options = list(
+                                       `actions-box` = TRUE, 
+                                       size = 10,
+                                       `selected-text-format` = "count > 7",
+                                       `live-search` = TRUE),
+                                   selected = '')),
+                column(3,
+                       radioGroupButtons(
+                           inputId = "seleccionar_series_ofms",
+                           label = "OFMs",
+                           choices = c("Separados", "Unidos"),
+                           checkIcon = list(
+                               yes = icon("ok",
+                                          lib = "glyphicon"))))),
+            fluidRow(
+                column(3,
+                       radioGroupButtons(
+                           inputId = "seleccionar_series_rango",
+                           label = "Seleccionar fechas",
+                           choices = c("1200-1800", "1500-1800"),
+                           checkIcon = list(
+                               yes = icon("ok",
+                                          lib = "glyphicon")))),
+                column(3,
+                       sliderInput("slider_series_rango",
+                                   label = "Fechas",
+                                   min = 1200, max = 1800,
+                                   value = c(1200, 1800)))),
+
+            h4("Serie general"),
+            plotOutput("orrg_series_general"),
+            hr(),
+            h4("Por países"),
+            plotOutput("orrg_series_general_porpaises"))
 
 
-variadostabs <- tabItems(tabgeneral, tabdiocgeneral, tabsecnosec, tabdioc_orrg,
+variadostabs <- tabItems(tabgeneral, tabdiocgeneral, tabindividual, tabsecnosec, tabdioc_orrg,
                          tab5, tab6, tabduracion, tabperiplogeneral, tabpresencia_orrg_diocs,
                          tab_orrg_motivosfin,
                          tab_ordenes, tabconsultageneral, tab_monasterioobispado,

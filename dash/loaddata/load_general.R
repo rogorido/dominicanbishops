@@ -26,6 +26,7 @@ dbSendQuery(con, ejecutar) # creamos una temp view
 
 paises_todos <- dbGetQuery(con, "SELECT * FROM tv_paises_todos")
 paises_todos <- as.vector(paises_todos$country)
+lista_paises_todos <- as.list(paises_todos)
 
 paises_europa <- dbGetQuery(con, "SELECT * FROM tv_paises_europa") 
 paises_europa <- as.vector(paises_europa$country)
@@ -39,3 +40,8 @@ paises_bizancio <- as.vector(paises_bizancio$country)
 # aquí habría q cargar tb la lista orrg_lista que es realmente es una
 # lista que creamos para usarla en general en comoboxes para seleccionar
 # dióceses. PERO: la cargamos en load_orrgs.R al crear ahí una temp view. 
+
+dioceses <- dbGetQuery(con, "SELECT DISTINCT diocese_id, diocese_name from dioceses ORDER BY diocese_name")
+
+dioceses_lista_ids <- dioceses$diocese_id
+dioceses_lista <- dioceses$diocese_name

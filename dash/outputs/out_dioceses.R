@@ -374,3 +374,102 @@ output$dioc_sec_vs_nosec_edm_mapa <-
             addCircleMarkers(lat = ~latitude, lng= ~longitude,
                              radius = ~conorder,
                              label = ~htmlEscape(paste0(diocese_name, "( ", conorder, "% )")))})
+
+### Para el tab individuales
+# cogemos algunos datos de otros df q ya están cargados para no tener
+# q hacer abragen a la base de datos
+
+# ATENCIÓN: hay q tener en cuenta que el pickerInput seleccionar_diocs
+# realmente tiene los ids aunque gracias a choicesOpt muestra los
+# nombres. 
+
+output$nombrediocesis_url  <- renderText({
+
+    d_id <- input$seleccionar_diocs
+        
+    j <- bis_per_dioc %>%
+        filter(diocese_id == d_id)
+
+    fundacion <- ifelse(j$foundation == 0, "--", as.character(j$foundation))
+
+    paste0(j$diocese_name, ", ", j$country, " (", j$url, ")",
+           ". Fundada: ",
+           fundacion)
+})
+
+output$ind_total_obispos_emd  <- renderValueBox({
+    d_id <- input$seleccionar_diocs
+    j <- bis_per_dioc %>%
+        filter(diocese_id == d_id)
+
+    valueBox(
+        j$total,
+        "Total obispos (1200-1800)", width = 3,
+        icon = icon("users", lib = "font-awesome"))
+})
+
+output$ind_total_obispos_edm  <- renderValueBox({
+
+    ## atneción: esto no está completado! esto lo mismo que lo anterior
+    d_id <- input$seleccionar_diocs
+    j <- bis_per_dioc %>%
+        filter(diocese_id == d_id)
+
+    valueBox(
+        j$total,
+        "Total obispos (1200-1800)", width = 3,
+        icon = icon("users", lib = "font-awesome"))
+})
+
+output$ind_tipos_obispos_emd  <- renderDataTable({
+
+    d_id <- input$seleccionar_diocs
+
+    sql <- paste0(getSQL("./sqls/dioc_ind1.sql"), d_id)
+    rs <- dbGetQuery(con, sql)
+
+    rs$order_acronym <- factor(rs$order_acronym)
+
+    mostrar <- fct_count(rs$order_acronym, sort = TRUE, prop = TRUE)
+    mostrar$p <- round(mostrar$p * 100, 2)
+    colnames(mostrar) <- c("Tipo", "Total", "%")
+    
+    DT::datatable(mostrar,
+                  options = list(searching = FALSE, paging = FALSE))
+    
+})
+
+output$ind_tipos_obispos_edm  <- renderDataTable({
+
+    d_id <- input$seleccionar_diocs
+
+    sql <- paste0(getSQL("./sqls/dioc_ind2.sql"), d_id)
+    rs <- dbGetQuery(con, sql)
+
+    rs$order_acronym <- factor(rs$order_acronym)
+
+    mostrar <- fct_count(rs$order_acronym, sort = TRUE, prop = TRUE)
+    mostrar$p <- round(mostrar$p * 100, 2)
+    colnames(mostrar) <- c("Tipo", "Total", "%")
+    
+    DT::datatable(mostrar,
+                  options = list(searching = FALSE, paging = FALSE))
+
+})
+
+output$ind_dioc_mapa  <- renderLeaflet({
+
+    ## atneción: esto no está completado! esto lo mismo que lo anterior
+    d_id <- input$seleccionar_diocs
+    j <- bis_per_dioc %>%
+        filter(diocese_id == d_id)
+
+    # no sé por qué coño con el setview no me funciona lo de ~longitude, etc.
+    # y por tanto tengo que poner los parámetros con j$longitude, etc. 
+    leaflet(j) %>%
+        setView(j$longitude, j$latitude, zoom = 6) %>% 
+        addProviderTiles(providers$Stamen.TonerLite,
+                         options = providerTileOptions(noWrap = TRUE)) %>%
+        addCircleMarkers(lat = ~latitude, lng= ~longitude,
+                         label = ~htmlEscape(paste0(j$diocese_name, " (", ~total, " )")))
+})

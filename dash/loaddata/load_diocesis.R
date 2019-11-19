@@ -124,8 +124,8 @@ rentas_por_obispo_orrg$diocese_name <- factor(rentas_por_obispo_orrg$diocese_nam
 datossql <- getSQL("./sqls/dioc_duraciones.sql")
 dioc_duraciones <- dbGetQuery(con, datossql)
 
-dioc_duraciones_min <- min(dioc_duraciones$mediaanos)
-dioc_duraciones_max <- max(dioc_duraciones$mediaanos)
+dioc_duraciones_min <- min(dioc_duraciones$mediaanos, na.rm = TRUE)
+dioc_duraciones_max <- max(dioc_duraciones$mediaanos, na.rm = TRUE)
 
 # y luego huecos
 

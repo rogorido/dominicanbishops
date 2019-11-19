@@ -186,69 +186,178 @@ output$ops_periplos_edm <- renderDataTable({
                   options = list(pageLength = 50))
 })
 
-output$orrg_series_edm_general <- renderPlot({
+output$periplos_clusters_edm <- renderDataTable({
+    mostrar <- periplos_clusters_edm %>%
+        filter(dioc_id_a == input$seleccionar_diocs_periplos_clusters)
+
+    DT::datatable(mostrar, filter = 'top',
+                  escape = FALSE,
+                  options = list(pageLength = 50))
+})
+
+output$periplos_clusters_edm_mapa <-
+    renderLeaflet({
+        mostrar <- periplos_clusters_edm %>%
+            filter(dioc_id_a == input$seleccionar_diocs_periplos_clusters)
+        
+        leaflet(mostrar) %>%
+            addProviderTiles(providers$Stamen.TonerLite,
+                             options = providerTileOptions(noWrap = TRUE)) %>%
+            addMarkers(lat = ~lat_a, lng= ~long_a,
+                       label = ~htmlEscape(diocesis_a)) %>%
+            addCircleMarkers(lat = ~lat_b, lng= ~long_b,
+                             label = ~htmlEscape(diocesis_b))})
+output$periplos_clusters_edm_ops_totales <- renderDataTable({
+    mostrar <- periplos_clusters_edm_ops %>%
+        group_by(diocesis_a) %>%
+        summarise(total = n()) %>%
+        arrange(-total)
+    
+    DT::datatable(mostrar, filter = 'top',
+                  escape = FALSE,
+                  options = list(pageLength = 10))
+})
+
+output$periplos_clusters_edm_ops <- renderDataTable({
+    mostrar <- periplos_clusters_edm_ops %>%
+        filter(dioc_id_a == input$seleccionar_diocs_periplos_clusters_ops)
+
+    DT::datatable(mostrar, filter = 'top',
+                  escape = FALSE,
+                  options = list(pageLength = 50))
+})
+
+output$periplos_clusters_edm_ops_mapa <-
+    renderLeaflet({
+        mostrar <- periplos_clusters_edm_ops %>%
+            filter(dioc_id_a == input$seleccionar_diocs_periplos_clusters_ops)
+        
+        leaflet(mostrar) %>%
+            addProviderTiles(providers$Stamen.TonerLite,
+                             options = providerTileOptions(noWrap = TRUE)) %>%
+            addMarkers(lat = ~lat_a, lng= ~long_a,
+                       label = ~htmlEscape(diocesis_a)) %>%
+            addCircleMarkers(lat = ~lat_b, lng= ~long_b,
+                             label = ~htmlEscape(diocesis_b))})
+
+output$orrg_series_general <- renderPlot({
+
+    # lo primero que hay q decidir es si es con los OFMs juntos o separados
+    # luego seleccionamos las fechas. Esto dtf está cutre pq repetimos el código!
+    if (input$seleccionar_series_ofms == "Separados") {
+        if (input$seleccionar_series_rango == "1200-1800") {
+        mostrar_previo <- orrg_series_emd_general
+        fechainicio = "1200-01-01"
+        fechafin = "1800-01-01"
+        }
+        else {
+            mostrar_previo <- orrg_series_edm_general
+            fechainicio = "1500-01-01"
+            fechafin = "1800-01-01"
+        }
+    }
+    else {
+        if (input$seleccionar_series_rango == "1200-1800") {
+        mostrar_previo <- orrg_series_emd_unido
+        fechainicio = "1200-01-01"
+        fechafin = "1800-01-01"
+        }
+        else {
+            mostrar_previo <- orrg_series_edm_unido 
+            fechainicio = "1500-01-01"
+            fechafin = "1800-01-01"
+        }
+    }
+
+    
+    # solo lo cambiamos en el caso de q sean varios países...
+    if (is.null(input$seleccionar_orrg_series_paises)) {
+        mostrar_previo <- mostrar_previo 
+    }
+    else  {
+        mostrar_previo <- mostrar_previo %>%
+            filter(country %in% input$seleccionar_orrg_series_paises)
+    }
+
+    # y ahora con esto tenemos q completar los años porque realmente no lo están!
+    dffinal = NULL
+    for (i in input$seleccionar_orrg_series) {
+
+        dftemp <- mostrar_previo %>%
+            filter(order_acronym == i)
+
+        dftemp  <- dftemp %>%
+            mutate(ano = as.Date(serie)) %>%
+            complete(ano = seq.Date(as.Date(fechainicio), as.Date(fechafin), by="year"),
+                     order_acronym = i)
+
+        dffinal = rbind(dffinal, dftemp)
+        }
+
     # esto es sin países por lo q hay q colapsar 
-    mostrar <- orrg_series_edm_general %>%
-        filter(order_acronym %in% input$orrg_series_edm_general) %>%
-        group_by(order_acronym, serie) %>%
+    mostrar <- dffinal %>%
+        group_by(order_acronym, ano) %>%
         summarise(total = sum(totalobispos))
 
-    ggplot(mostrar, aes( x = serie, y = total, color = order_acronym)) +
+    ggplot(mostrar, aes( x = ano, y = total, color = order_acronym)) +
         geom_line(size = 1.2) +
+        #xlim(fechainicio, fechafin) + 
         theme_light()
 })
 
-output$orrg_series_edm_general_porpaises <- renderPlot({
-    mostrar <- orrg_series_edm_general %>%
-        filter(order_acronym %in% input$orrg_series_edm_general)
+output$orrg_series_general_porpaises <- renderPlot({
 
-    ggplot(mostrar, aes( x = serie, y = totalobispos, color = order_acronym)) +
+    # lo primero que hay q decidir es si es con los OFMs juntos o
+    # separados luego seleccionamos las fechas. Esto dtf está cutre pq
+    # repetimos el código dentro del ifelse! Además se repite el código
+    # en este renderPlot y en el anteiror!
+        if (input$seleccionar_series_ofms == "Separados") {
+        if (input$seleccionar_series_rango == "1200-1800") {
+        mostrar_previo <- orrg_series_emd_general
+        fechainicio = "1200-01-01"
+        fechafin = "1800-01-01"
+        }
+        else {
+            mostrar_previo <- orrg_series_edm_general
+            fechainicio = "1500-01-01"
+            fechafin = "1800-01-01"
+        }
+    }
+    else {
+        if (input$seleccionar_series_rango == "1200-1800") {
+        mostrar_previo <- orrg_series_emd_unido
+        fechainicio = "1200-01-01"
+        fechafin = "1800-01-01"
+        }
+        else {
+            mostrar_previo <- orrg_series_edm_unido 
+            fechainicio = "1500-01-01"
+            fechafin = "1800-01-01"
+        }
+    }
+
+    # y ahora con esto tenemos q completar los años porque realmente no lo están!
+    dffinal = NULL
+    for (i in input$seleccionar_orrg_series) {
+
+        dftemp <- mostrar_previo %>%
+            filter(order_acronym == i)
+
+        dftemp  <- dftemp %>%
+            mutate(ano = as.Date(serie)) %>%
+            complete(ano = seq.Date(as.Date(fechainicio), as.Date(fechafin), by="year"),
+                     order_acronym = i)
+
+        dffinal = rbind(dffinal, dftemp)
+    }
+
+    ggplot(dffinal, aes( x = ano, y = totalobispos, color = order_acronym)) +
         geom_line(size = 1.2) +
-        facet_wrap(~country)
-        
+        facet_wrap(~country) +
+        #xlim(fechainicio, fechafin) + 
+        theme_light()
 })
 
-output$orrg_series_emd_general <- renderPlot({
-    # esto es sin países por lo q hay q colapsar 
-    mostrar <- orrg_series_emd_general %>%
-        filter(order_acronym == input$orrg_series_emd_general) %>%
-        group_by(order_acronym, serie) %>%
-        summarise(total = sum(totalobispos))
-
-    ggplot(mostrar, aes( x = serie, y = total)) +
-        geom_line(size = 1.2)
-})
-
-output$orrg_series_emd_general_porpaises <- renderPlot({
-    mostrar <- orrg_series_emd_general %>%
-        filter(order_acronym == input$orrg_series_emd_general)
-
-    ggplot(mostrar, aes( x = serie, y = totalobispos)) +
-        geom_line(size = 1.2) +
-        facet_wrap(~country)
-        
-})
-
-output$orrg_series_emd_unido <- renderPlot({
-    # esto es sin países por lo q hay q colapsar 
-    mostrar <- orrg_series_emd_unido %>%
-        filter(order_acronym == input$orrg_series_emd_unido) %>%
-        group_by(order_acronym, serie) %>%
-        summarise(total = sum(totalobispos))
-
-    ggplot(mostrar, aes( x = serie, y = total)) +
-        geom_line(size = 1.2)
-})
-
-output$orrg_series_emd_unido_porpaises <- renderPlot({
-    mostrar <- orrg_series_emd_unido %>%
-        filter(order_acronym == input$orrg_series_emd_unido)
-
-    ggplot(mostrar, aes( x = serie, y = totalobispos)) +
-        geom_line(size = 1.2) +
-        facet_wrap(~country)
-        
-})
 
 output$orrg_motivosfin_edm  <- renderDataTable({
     mostrar <- orrg_motivosfin_edm %>%
