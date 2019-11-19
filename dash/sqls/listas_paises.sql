@@ -10,6 +10,11 @@ SELECT DISTINCT country
 FROM places
 WHERE country is NOT NULL AND 'Europe' = ANY(macroregions);
 
+CREATE OR REPLACE TEMP VIEW tv_paises_west_europa AS
+SELECT DISTINCT country
+FROM places
+WHERE 'Western Europe' = ANY(macroregions);
+
 CREATE OR REPLACE TEMP VIEW tv_paises_noeuropa AS
 SELECT DISTINCT country
 FROM places

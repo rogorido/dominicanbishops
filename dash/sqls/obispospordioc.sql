@@ -10,9 +10,9 @@ WITH general AS (
             COUNT(*) AS total FROM vistas.b_emd_cs_sa
      GROUP BY diocese_id)
      
-SELECT DISTINCT diocese_id, d.diocese_name,
+SELECT DISTINCT diocese_id, d.diocese_name, (d.other_data->'gcatholic'->>'foundation')::INTEGER AS foundation,
        '<a href="'  || url_hierarchy || '" target="_blank">' || d.diocese_name || '</a>' AS url,
-       p.longitude, p.latitude, total 
+       p.longitude, p.latitude, p.country, total 
 FROM general
   JOIN dioceses d USING(diocese_id)
-  JOIN places P USING (place_id);
+  LEFT JOIN places P USING (place_id);

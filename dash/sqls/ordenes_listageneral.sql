@@ -7,7 +7,12 @@
 SELECT DISTINCT r.order_acronym,
        r.order_name_english AS order_name,
        r.order_type AS type_order,
-       r.year_foundation
+       r.year_foundation,
+       COUNT(bishop_all_id)
 FROM religious_orders r
 JOIN vistas.b_emd_ss_sa USING(order_id)
+GROUP BY r.order_acronym,
+      order_name,
+      type_order,
+      r.year_foundation
 ORDER BY order_acronym;

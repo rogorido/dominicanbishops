@@ -28,5 +28,5 @@ diocsinfrailes AS (
                        WHERE df.diocese_id = c.diocese_id AND df.order_id = c.order_id ))
 
 SELECT order_id, fundacionorder, diocese_id, fundaciondioc
-FROM diocsinfrailes
-WHERE fundacionorder::integer > fundaciondioc;
+FROM diocsinfrailes;
+--WHERE fundacionorder::integer > fundaciondioc;
