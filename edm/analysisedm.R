@@ -15,6 +15,7 @@ con <- dbConnect(drv= "PostgreSQL",
 setwd("/home/igor/geschichte/artikel/obisposdominicos/analisis/edm")
 source("../functions.R")
 source("./owntheme_edm.R")
+source("./variables.R")
 
 dir_edm = "/home/igor/geschichte/artikel/obisposdominicos/analisis/plots/edadmoderna"
 
@@ -76,8 +77,90 @@ Desc(ops_edm_generaldata$anos)
 # dioceses con nº de OPs obispos 
 #######################################
 
-sql <- getSQL("../sql/edm/aggdiocesesedm.sql")
+sql <- getSQL("../sql/edm/aggdioceses_edm.sql")
 aggdioceses <- dbGetQuery(con, sql)
+
+## ITaly
+
+italy_number_dioceses <- aggdioceses %>%
+    filter (country == 'Italy')
+Desc(factor(italy_number_dioceses$total))
+
+# coger? Solo Itlaia 
+p<- aggdioceses %>%
+    filter (country == 'Italy') %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'italy_number_dioceses.png',
+       path = dir_edm)
+
+aggdioceses_sf <- st_as_sf(aggdioceses,
+                          coords = c("longitude", "latitude"),
+                          agr = "constant")
+st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
+
+## Francia
+france_number_dioceses <- aggdioceses %>%
+    filter (country == 'France')
+Desc(factor(france_number_dioceses$total))
+
+p<- aggdioceses %>%
+    filter (country == 'France') %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'france_number_dioceses.png',
+       path = dir_edm)
+
+aggdioceses_sf <- st_as_sf(aggdioceses,
+                          coords = c("longitude", "latitude"),
+                          agr = "constant")
+st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
+
+## Irland
+ireland_number_dioceses <- aggdioceses %>%
+    filter (country == 'Ireland')
+Desc(factor(ireland_number_dioceses$total))
+
+p<- aggdioceses %>%
+    filter (country == 'Ireland') %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'ireland_number_dioceses.png',
+       path = dir_edm)
+
+aggdioceses_sf <- st_as_sf(aggdioceses,
+                          coords = c("longitude", "latitude"),
+                          agr = "constant")
+st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
+
+## Spain
+spain_number_dioceses <- aggdioceses %>%
+    filter (country == 'Spain')
+Desc(factor(spain_number_dioceses$total))
+
+# solo spain
+p<- aggdioceses %>%
+    filter (country == 'Spain') %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'spain_number_dioceses.png',
+       path = dir_edm)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -181,7 +264,7 @@ obispos_bizancio_decada <- dbGetQuery(con, sql)
 ggplot(obispos_bizancio_decada, aes(x= r_from, y= total)) + geom_bar(stat="identity")
 
 #######################################
-# otra vez series temporales 
+# otra vez series temporales  por paises
 #######################################
 
 sql <- getSQL("../sql/edm/series_temporales_edm_op.sql")
@@ -228,139 +311,6 @@ p <- op_series_edm %>%
 ggsave(p, filename= 'spain_series.png',
        path = dir_edm)
 
-# Countries lists to collapse 
-c_habsburgs <- c("Spain", "Argentina", "Bolivia", "Chile", "Colombia",
-               "Cuba", "Ecuador", "Dominican Republic", "Ecuador",
-               "Guatemala", "Honduras", "Mexico", "Nicaragua", "Panamá",
-               "Paraguay", "Peru", "Philippines", "Puerto Rico",
-               "Venezuela")
-
-c_balcans <- c("Bosnia and Herzegovina", "Croacia", "Slovenia",
-               "Montenegro", "Greece", "Albania", "Cyprus")
-
-c_northern_europe <- c("Ireland", "Great Britain",
-                       "Norway", "Denmark", "Sweden")
-
-c_germany <- c("Germany", "Austria", "Netherlands", "Belgium")
-
-
-op_series_edm$countrycollapsed <- op_series_edm$country
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Balcans = c_balcans)
-
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Northern = c_northern_europe)
-
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Germanlands = c_germany)
-
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Balcans = c_balcans)
-
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Habsburgs = c_habsburgs)
-
-# Habsburgs: Spain + America
-
-p <- op_series_edm %>%
-    filter(countrycollapsed == "Habsburgs") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3, color = "#a12828") +
-        labs(x = element_blank(),
-         y = "# of bishops") +
-    theme_sosa() +
-    scale_y_continuous(limits=c(0, 25))
-
-ggsave(p, filename= 'series_habsburgs.png',
-       path = dir_edm)
-
-
-# northern europe  
-p <- op_series_edm %>%
-    filter(countrycollapsed == "Northern") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3, color = "#a12828") +
-        labs(x = element_blank(),
-         y = "# of bishops") +
-    theme_sosa() +
-    scale_y_continuous(limits=c(0, 25))
-
-ggsave(p, filename= 'series_northern.png',
-       path = dir_edm)
-
-# German lands  
-p <- op_series_edm %>%
-    filter(countrycollapsed == "Germanlands") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3, color = "#a12828") +
-        labs(x = element_blank(),
-         y = "# of bishops") +
-    theme_sosa() +
-    scale_y_continuous(limits=c(0, 25))
-
-ggsave(p, filename= 'series_germanlands.png',
-       path = dir_edm)
-
-# balcans
-p <- op_series_edm %>%
-    filter(countrycollapsed == "Balcans") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3, color = "#a12828") +
-        labs(x = element_blank(),
-         y = "# of bishops") +
-    theme_sosa() +
-    scale_y_continuous(limits=c(0, 25))
-
-ggsave(p, filename= 'series_adriatic.png',
-       path = dir_edm)
-
-# blacans 
-op_series_edm %>%
-    filter(countrycollapsed == "Balcans") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3)
-    labs(x = element_blank(),
-         y = "# of bishops") +
-    theme(plot.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.background = element_blank()) +
-    theme(panel.border= element_blank()) +
-    theme(text = element_text(size = 20))  +
-    theme(panel.grid.major.y = element_line(colour = "grey80"))
-
-op_series_edm %>%
-    filter(country %in% c("Spain", "France", "Italy", "Germany")) %>%
-    ggplot(., aes(x=serie, y= totalobispos, color = country)) +
-    geom_line(size = 1.6) +
-    labs(x = element_blank(),
-         y = "# of bishops") +
-    theme(plot.background = element_blank(),
-          panel.grid.major = element_blank()) +
-    theme(panel.border= element_blank())+
-    theme(axis.line.x = element_line(color="black", size = 1),
-          axis.line.y = element_line(color="black", size = 1)) +
-    theme(axis.title = element_text(size = rel(2)),
-          axis.text = element_text(size = rel(2)))
 
 
 # otra versión de lo mismo pero con wrap 
@@ -423,34 +373,30 @@ op_series_edm %>%
     theme(panel.grid.major.y = element_line(colour = "grey80"))
 
 
-# los de eslovenia, etc.
-op_series_edm$countrycollapsed <- op_series_edm$country
-op_series_edm$countrycollapsed <-
-    fct_collapse(op_series_edm$countrycollapsed,
-                 Balcans = c("Bosnia and Herzegovina", "Croacia",
-                      "Slovenia", "Montenegro", "Greece", "Albania", "Cyprus"))
-
-op_series_edm %>%
-    filter(countrycollapsed == "Balcans") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))%>%
-    na_if(0) %>%
-    ggplot(., aes(x=serie, y= total)) +
-    geom_line(size = 1.3)
-    labs(x = element_blank(),
-         y = "# of bishops") +
-    theme(plot.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.background = element_blank()) +
-    theme(panel.border= element_blank()) +
-    theme(text = element_text(size = 20))  +
-    theme(panel.grid.major.y = element_line(colour = "grey80"))
 
 
-j <-op_series_edm %>%
-    filter(countrycollapsed == "Balcans") %>%
-    group_by(serie, countrycollapsed) %>%
-    summarise(total = sum(totalobispos))
+#######################################
+# otra vez series temporales  por diócesis 
+#######################################
+sql <- getSQL("../sql/edm/series_temporales_edm_op_diocesis.sql")
+op_series_edm <- dbGetQuery(con, sql)
+op_series_edm$country <- factor(op_series_edm$country)
 
-j <- j %>% filter(serie=="1501-01-01")
+op_series_edm_agg <- op_series_edm %>%
+        group_by(serie) %>%
+        summarise(total = sum(totalobispos))
 
+
+#######################################
+# para ver en un mapa en qué diócesis están
+# y qen qué diócesis no están 
+#######################################
+sql <- getSQL("../sql/edm/ops_bool_perdiocesis.sql")
+rs = dbSendQuery(con, sql, params = list("Italy"))
+ops_bool_perdiocesis <- dbFetch(rs)
+dbClearResult(rs)
+
+ops_bool_perdiocesis.italy_sf  <- st_as_sf(ops_bool_perdiocesis,
+                                     coords = c("longitude", "latitude"),
+                                     agr = "constant")
+st_write(ops_bool_perdiocesis.italy_sf, "ops_bool_perdiocesis.italy.geojson", append = FALSE)
