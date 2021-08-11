@@ -826,3 +826,199 @@ JOIN vistas.bishops_individuals_edm_op b USING (diocese_id)
 JOIN dioceses d USING (diocese_id)
 JOIN places P USING (place_id)
 GROUP BY 1;
+
+SELECT COUNT(DISTINCT diocese_id)
+FROM vistas.bishops_individuals_edm_op b;
+
+SELECT COUNT(DISTINCT url)
+FROM vistas.bishops_individuals_edm_op b;
+
+
+SELECT COUNT(DISTINCT url)
+       FILTER (WHERE religious_order IS NULL),
+       COUNT(DISTINCT url)
+       FILTER (WHERE religious_order IS NOT NULL)
+FROM b_edm_cs_sa;
+
+WITH j AS
+(SELECT religious_order, COUNT(*) AS total
+FROM b_edm_cs_sa
+WHERE religious_order IS NOT NULL
+GROUP BY 1)
+SELECT religious_order, total,
+       total::REAL / SUM(total::REAL) OVER () AS porcentaje
+FROM j
+GROUP BY 1, 2
+ORDER BY total DESC;
+
+--- fundaciones de órdenes religisoas
+WITH j AS (
+     SELECT r.order_id,
+            CASE
+                WHEN r.year_foundation = '4th Century' THEN '350'
+                WHEN r.year_foundation = '6th Century' THEN '550'
+                WHEN r.year_foundation = '11th Century' THEN '1050'
+                WHEN r.year_foundation = '14th Century' THEN '1350'
+                ELSE r.year_foundation
+             END AS fundacionorder
+     FROM general.religious_orders r)
+SELECT COUNT(*) FILTER (WHERE fundacionorder::int < 1800) AS anteriores,
+       COUNT(*) FILTER (WHERE fundacionorder::int > 1800) AS posteriores,
+       COUNT(*) FILTER (WHERE fundacionorder::int > 1500 AND fundacionorder::int < 1800) AS edm
+FROM j;
+
+--- las de la edm
+WITH j AS (
+     SELECT r.*,
+            CASE
+                WHEN r.year_foundation = '4th Century' THEN '350'
+                WHEN r.year_foundation = '6th Century' THEN '550'
+                WHEN r.year_foundation = '11th Century' THEN '1050'
+                WHEN r.year_foundation = '14th Century' THEN '1350'
+                ELSE r.year_foundation
+             END AS fundacionorder
+     FROM general.religious_orders r)
+SELECT j.*
+FROM j
+WHERE fundacionorder::int > 1500 AND fundacionorder::int < 1800
+ORDER BY fundacionorder::INT DESC;
+
+SELECT *
+FROM b_edm_cs_sa
+WHERE date_nomination > '1800-01-01';
+
+SELECT *
+FROM b_edm_cs_sa
+WHERE religious_order = 'S.A.';
+
+
+CREATE OR REPLACE VIEW cojones3
+    AS
+  SELECT b.*, r.order_id, r.order_acronym, r.order_name_english, r.order_type
+  FROM b_bishops_reducido b
+  LEFT JOIN religious_orders r ON b.religious_order_id = r.order_id
+  WHERE affiliated = FALSE and date_nomination > '1500-01-01' AND
+        date_nomination < '1800-01-01';
+
+SELECT *
+FROM cojones3
+WHERE date_nomination > '1800-01-01';
+
+SELECT * FROM cojones3
+WHERE bishop_all_id NOT IN
+   (SELECT bishop_all_id FROM b_edm_cs_sa);
+
+
+
+CREATE OR replace VIEW cojones4 AS
+WITH concretos AS
+  (SELECT url,
+          bishop_surname || bishop_name AS bishop_fullname,
+          diocese_id, date_nomination, date_end,
+          order_id, order_acronym, order_name_english, order_type,
+          reason_begin, reason_end
+  FROM cojones3
+  WHERE order_id = 121)
+
+SELECT url, bishop_fullname,
+       order_id, order_acronym, order_name_english, order_type,
+       diocese_ID, dioceses.diocese_name,
+       longitude, latitude,
+       reason_begin, reason_end,
+       date_nomination, date_end,
+       date_end - date_nomination AS duracion,
+       round(((date_end - date_nomination)::NUMERIC/365)::DECIMAL, 2) AS anos,
+       ROW_NUMBER() OVER (PARTITION BY url ORDER BY date_nomination ) AS ordinal
+FROM concretos
+JOIN general.dioceses USING(diocese_id)
+LEFT JOIN general.places USING (place_id)
+ORDER BY url, date_nomination;
+
+--- otro
+WITH j AS
+(SELECT religious_order, COUNT(*) AS total
+FROM cojones3
+WHERE religious_order IS NOT NULL
+GROUP BY 1)
+SELECT religious_order, total,
+       round((total::numeric / SUM(total::numeric) OVER ()) *100, 2) AS porcentaje
+FROM j
+GROUP BY 1, 2
+ORDER BY total DESC;
+
+
+SELECT COUNT(DISTINCT url)
+       FILTER (WHERE religious_order IS NULL),
+       COUNT(DISTINCT url)
+       FILTER (WHERE religious_order IS NOT NULL)
+FROM b_edm_cs_sa;
+
+
+SELECT COUNT(DISTINCT diocese_id)
+FROM b_edm_cs_sa;
+
+SELECT COUNT(DISTINCT diocese_id)
+FROM vistas.bishops_individuals_edm_op b;
+
+
+SELECT CASE
+       WHEN religious_order IS NOT NULL THEN 'Non-secular'
+       WHEN religious_order IS NULL THEN 'Secular'
+       END AS bishoptype,
+       COUNT(*) AS total
+FROM vistas.b_edm_cs_sa
+GROUP BY bishoptype;
+
+
+SELECT p.name_pope, p.date_nomination,
+       p.date_death - p.date_nomination AS duration,
+       round((p.date_death - p.date_nomination)::NUMERIC / 365, 2) AS anyos,
+       COUNT(*) AS total,
+       COUNT(*) / ((p.date_death - p.date_nomination)::NUMERIC / 365) as mediaanual
+FROM popes P
+JOIN vistas.bishops_individuals_edm_op b
+     ON  b.date_nomination > p.date_nomination
+         AND b.date_nomination < p.date_death
+GROUP BY 1,2,3
+ORDER BY COUNT(*) ASC;
+--- mirando eso de por qué hay esa bajada
+--- a finales del xvi
+SELECT EXTRACT(YEAR FROM date_end) AS anyo,
+       COUNT(*)
+FROM vistas.bishops_individuals_edm_op b
+WHERE reason_end = 'Died'
+GROUP BY 1
+ORDER BY anyo;
+
+
+WITH series AS
+      (SELECT generate_series(1500, 1800, 10) AS r_from),
+      rango AS (
+      SELECT r_from, (r_from + 9) AS r_to FROM series)
+SELECT r_from, r_to, COUNT(date_end) AS total
+FROM rango
+JOIN vistas.bishops_individuals_edm_op b
+     ON  extract(year from date_end) BETWEEN r_from AND r_to
+WHERE b.reason_end = 'Died'
+GROUP BY 1, 2
+ORDER BY r_from;
+
+-- sumar totalse por dićesis sin más
+DROP VIEW IF EXISTS qgis.anyostotales;
+CREATE OR REPLACE VIEW qgis.anyostotales AS
+SELECT diocese_id, diocese_name,
+       st_transform(ST_SetSRID(ST_MakePoint(longitude, latitude),4326), 54030) AS geom,
+       SUM(anos) AS total,
+       SUM(anos) / 300 AS porcentaje,
+       ROW_NUMBER() OVER() AS myid -- esto hace falta tvz por qgis
+FROM vistas.bishops_individuals_edm_op b
+group BY 1,2,3
+ORDER BY SUM(anos);
+
+SELECT diocese_name, total, porcentaje
+FROM qgis.anyostotales
+ORDER BY porcentaje;
+
+SELECT COUNT(*)
+FROM vistas.bishops_individuals_edm_op b
+WHERE anos < 2;

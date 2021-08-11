@@ -22,6 +22,8 @@ dir_edm = "/home/igor/geschichte/artikel/obisposdominicos/analisis/plots/edadmod
 #######################################
 # seculars vs non seculares
 #######################################
+
+## atención estos datos están mal pq está contando los obispos varias veces
 sql <- getSQL("../sql/edm/typebishops_edm.sql")
 typebishops <- dbGetQuery(con, sql)
 
@@ -69,7 +71,11 @@ anos.ecdf(c(1:3))
 quantile(ops_edm_generaldata$anos, probs = seq(0,1,0.1),
          na.rm =TRUE )                                                              
 
+quantile(ops_edm_generaldata$anos,
+         na.rm =TRUE )
+
 Desc(ops_edm_generaldata$anos)
+Desc(ops_edm_generaldata$anos ~ factor(ops_edm_generaldata$ordinal))
 
 # hacer ttest entrer OPs y seculares?
 
