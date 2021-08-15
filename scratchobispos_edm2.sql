@@ -1022,3 +1022,66 @@ ORDER BY porcentaje;
 SELECT COUNT(*)
 FROM vistas.bishops_individuals_edm_op b
 WHERE anos < 2;
+
+SELECT * FROM qgis.porcentajes_ops;
+
+SELECT * FROM b_edm_cs_sa WHERE diocese_id = 607;
+
+CREATE TEMP VIEW opsmonopol AS
+WITH conjunta AS (
+       SELECT diocese_id, COUNT(*) AS totalorders
+       FROM vistas.b_edm_cs_sa
+       WHERE religious_order IS NOT NULL
+       GROUP BY diocese_id),
+ops AS (
+       SELECT diocese_id,  COUNT(*) AS totalops
+       FROM vistas.b_edm_cs_sa
+       WHERE religious_order_id = 121
+       GROUP BY diocese_id)
+SELECT diocese_id, d.diocese_name, p.country,
+       ST_SetSRID(ST_MakePoint(P.longitude, P.latitude),4326) AS coord,
+       totalorders, totalops,
+       (totalops::real/totalorders::real)::REAL   as porcentaje
+FROM general.dioceses d
+JOIN conjunta c USING (diocese_id)
+JOIN ops o USING (diocese_id)
+JOIN general.places p ON p.place_id = d.place_id
+ORDER BY d.diocese_name;
+
+    WITH j AS
+       (SELECT * FROM opsmonopol
+       JOIN (
+       SELECT b.diocese_id, COUNT(*) AS total
+       FROM vistas.bishops_individuals_edm_op b
+       GROUP BY b.diocese_id
+       HAVING COUNT(*) >= 2) t USING (diocese_id)
+       WHERE porcentaje > 0.5)
+    SELECT country, COUNT(*) AS total
+    FROM j GROUP BY country
+    ORDER BY total DESC;
+
+
+SELECT * FROM opsmonopol
+  JOIN (
+     SELECT b.diocese_id, COUNT(*) AS total
+     FROM vistas.bishops_individuals_edm_op b
+     GROUP BY b.diocese_id
+     HAVING COUNT(*) >= 2) t USING (diocese_id)
+  WHERE porcentaje > 0.5
+  ORDER BY porcentaje DESC, totalops DESC;
+
+
+WITH j AS
+(SELECT b.*,
+       ST_SetSRID(ST_MakePoint(P.longitude, P.latitude),4326) AS coord, p.country
+FROM vistas.bishops_individuals_edm_op b
+JOIN dioceses d USING (diocese_id)
+JOIN places P USING (place_id)
+WHERE country = ANY(array['Bosnia and Herzegovina', 'Croacia', 'Slovenia',
+               'Montenegro', 'Albania', 'Cyprus', 'Macedonia',
+               'Serbia']))
+SELECT diocese_id, diocese_name, coord,
+       COUNT(*) AS total
+FROM j
+GROUP BY 1, 2, 3
+ORDER BY total DESC;
