@@ -69,3 +69,15 @@ p <- decadas_paises %>% filter(country == 'France') %>%
 
 ggsave(p, filename= 'nombramientos_decadas_france.png',
        path = dir_edm)
+
+# en italia
+
+p <- decadas_paises %>% filter(country == 'Ireland') %>%
+    ggplot(., aes(x=r_from, y = total)) +
+    geom_bar(stat = "identity", fill = "#a12828") +
+    labs(x = "Decades",
+         y = "# of bishops") +
+    theme_sosa()
+
+ggsave(p, filename= 'nombramientos_decadas_italia.png',
+       path = dir_edm)

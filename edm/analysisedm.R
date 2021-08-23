@@ -173,6 +173,28 @@ aggdioceses_sf <- st_as_sf(aggdioceses,
                           agr = "constant")
 st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
 
+## américa
+america_number_dioceses <- aggdioceses %>%
+    filter (country %in% c_america)
+Desc(factor(america_number_dioceses$total))
+
+p<- aggdioceses %>%
+    filter (country %in% c_america) %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'america_number_dioceses.png',
+       path = dir_edm)
+
+aggdioceses_sf <- st_as_sf(aggdioceses,
+                          coords = c("longitude", "latitude"),
+                          agr = "constant")
+st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
+
+
 #######################################
 # sumamos los años q están en cada 
 #######################################

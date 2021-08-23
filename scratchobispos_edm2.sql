@@ -1,4 +1,4 @@
-SELECT * FROM vistas.dioceses_rents;
+1SELECT * FROM vistas.dioceses_rents;
 
 SELECT DISTINCT b.diocese_id, b.diocese_name
 FROM vistas.bishops_individuals_edm_op b
@@ -825,7 +825,8 @@ FROM j
 JOIN vistas.bishops_individuals_edm_op b USING (diocese_id)
 JOIN dioceses d USING (diocese_id)
 JOIN places P USING (place_id)
-GROUP BY 1;
+GROUP BY 1
+ORDER BY total desc;
 
 SELECT COUNT(DISTINCT diocese_id)
 FROM vistas.bishops_individuals_edm_op b;
@@ -1085,3 +1086,138 @@ SELECT diocese_id, diocese_name, coord,
 FROM j
 GROUP BY 1, 2, 3
 ORDER BY total DESC;
+
+SELECT url, bishop_fullname, anos, diocese_name
+FROM vistas.bishops_individuals_edm_op b
+WHERE anos BETWEEN (
+SELECT percentile_cont(0.75) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op) AND
+(
+SELECT percentile_cont(1) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op)
+ORDER BY anos;
+
+--- los q están en el percentil mayor de longevidad
+SELECT url, bishop_fullname, anos, diocese_name
+FROM vistas.bishops_individuals_edm_op b
+WHERE anos BETWEEN (
+SELECT percentile_cont(0.9) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op) AND
+(
+SELECT percentile_cont(1) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op)
+ORDER BY anos;
+
+
+--- los q están en el percentil mayor de longevidad
+--- sacamos los siglos a ver si me dice algo
+WITH j AS
+(SELECT url, bishop_fullname, anos, diocese_name,
+        EXTRACT(century FROM date_nomination) AS siglo
+FROM vistas.bishops_individuals_edm_op b
+WHERE anos BETWEEN (
+SELECT percentile_cont(0.9) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op) AND
+(
+SELECT percentile_cont(1) WITHIN group (ORDER BY anos)
+FROM vistas.bishops_individuals_edm_op))
+SELECT siglo, COUNT(*)
+FROM j
+GROUP BY 1
+ORDER BY siglo;
+
+SELECT COUNT(*) FILTER (WHERE anos >= 20 AND anos <= 29) AS veintes,
+       COUNT(*) FILTER (WHERE anos >= 30 AND anos <= 39) AS treintas,
+       COUNT(*) FILTER (WHERE anos >= 40) AS cuarentas
+FROM vistas.bishops_individuals_edm_op b;
+
+
+SELECT COUNT(*) FILTER (WHERE anos >= 15 AND anos < 20) AS quinces,
+       COUNT(*) FILTER (WHERE anos >= 20 AND anos < 25) AS veintesuno,
+       COUNT(*) FILTER (WHERE anos >= 25 AND anos < 30) AS veintesdos,
+       COUNT(*) FILTER (WHERE anos >= 30 AND anos < 35) AS treintasuno,
+       COUNT(*) FILTER (WHERE anos >= 35 AND anos < 40) AS treintasdos,
+       COUNT(*) FILTER (WHERE anos >= 40) AS cuarentas
+FROM vistas.bishops_individuals_edm_op b;
+
+----
+WITH j AS (
+SELECT diocese_id,
+       (other_data->'gcatholic'->>'foundation')::integer AS fundacion
+FROM dioceses
+WHERE (other_data->'gcatholic'->>'foundation')::integer > 1500),
+K AS (
+SELECT *,
+       ROW_NUMBER() OVER (PARTITION BY j.diocese_id ORDER BY date_nomination) AS r
+FROM b_edm_cs_sa
+JOIN j USING (diocese_id))
+SELECT *
+FROM K
+WHERE r <= 5
+ORDER BY k.diocese_id, k.r;
+
+
+--- ahora con los OPS y su cantidad
+--- como sabemos q son 5 no hace falta grandes cálculos complicados
+WITH j AS (
+SELECT diocese_id, diocese_name,
+       (other_data->'gcatholic'->>'foundation')::integer AS fundacion
+FROM dioceses
+WHERE (other_data->'gcatholic'->>'foundation')::integer > 1500),
+K AS (
+SELECT b.*, j.diocese_name,
+       ROW_NUMBER() OVER (PARTITION BY j.diocese_id ORDER BY date_nomination) AS r
+FROM b_edm_cs_sa b
+JOIN j USING (diocese_id)),
+h AS (
+SELECT * FROM K WHERE r <= 5
+)
+SELECT diocese_id, diocese_name, COUNT(*) AS total
+FROM h
+WHERE order_id = 121
+GROUP BY 1, 2
+ORDER BY total DESC;
+
+SELECT DISTINCT d.diocese_id, d.diocese_name
+FROM dioceses d
+JOIN dioceses_details  USING (diocese_id)
+WHERE (details->>'without_data')::bool = TRUE;
+
+----
+SELECT reason_end, COUNT(*) AS total
+FROM vistas.bishops_individuals_edm_op b
+WHERE diocese_id = 679
+GROUP BY 1;
+
+
+SELECT diocese_id, diocese_name, reason_end, COUNT(*) AS total
+FROM vistas.bishops_individuals_edm_op b
+WHERE reason_end = 'Resigned'
+GROUP BY 1, 2, 3
+ORDER BY total DESC;
+
+SELECT *
+FROM vistas.bishops_individuals_edm_op b
+WHERE diocese_id = 679 AND reason_end = 'Resigned';
+
+
+SELECT DISTINCT B.diocese_id, B.diocese_name
+FROM vistas.bishops_individuals_edm_op b
+JOIN dioceses_details  USING (diocese_id)
+WHERE (details->>'without_data')::bool = TRUE;
+
+--- en irlanda
+SELECT *
+FROM vistas.bishops_individuals_edm_op b
+JOIN dioceses d USING(diocese_id)
+JOIN places P USING (place_id)
+WHERE country= 'Ireland';
+
+--- en irlanda; obipsos diferentes
+SELECT url, COUNT(*) AS total
+FROM vistas.bishops_individuals_edm_op b
+JOIN dioceses d USING(diocese_id)
+JOIN places P USING (place_id)
+WHERE country= 'Ireland'
+GROUP BY 1
+ORDER BY total;

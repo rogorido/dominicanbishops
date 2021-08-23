@@ -397,7 +397,7 @@ ggsave(p, filename= 'series_france_countries.png',
 op_series_edm$countrycollapsed <- op_series_edm$country
 
 p <- op_series_edm %>%
-    filter(countrycollapsed == "Irland") %>%
+    filter(countrycollapsed == "Ireland") %>%
     group_by(serie, countrycollapsed) %>%
     summarise(total = sum(totalobispos))%>%
     na_if(0) %>%
