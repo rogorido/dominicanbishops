@@ -1221,3 +1221,54 @@ JOIN places P USING (place_id)
 WHERE country= 'Ireland'
 GROUP BY 1
 ORDER BY total;
+
+----
+CREATE TEMP VIEW leches3 AS
+SELECT dg.*
+FROM bishops.dioceses_global_fl_estimado dg
+JOIN (SELECT DISTINCT diocese_id
+      FROM vistas.b_edm_cs_sa b) j
+     USING (diocese_id);
+
+---- voy
+CREATE TEMP VIEW mayoresrentas AS
+SELECT dg.*,
+       CASE WHEN
+            (SELECT diocese_id
+                    IN (SELECT DISTINCT diocese_id
+                        FROM vistas.b_edm_ss_sa b
+                        WHERE order_id = 121)) THEN TRUE
+       ELSE FALSE
+       END AS ops
+FROM bishops.dioceses_global_fl_estimado dg
+JOIN (SELECT DISTINCT diocese_id FROM vistas.b_edm_ss_sa b) j
+     USING (diocese_id)
+WHERE dg.tasa_media between (
+SELECT percentile_cont(0.75) WITHIN group (ORDER BY tasa_media)
+FROM bishops.dioceses_global_fl_estimado dg
+JOIN (SELECT DISTINCT diocese_id FROM vistas.b_edm_ss_sa b) j
+     USING (diocese_id)
+     WHERE pais = 'Spain') AND
+     (
+SELECT percentile_cont(1) WITHIN group (ORDER BY tasa_media)
+FROM bishops.dioceses_global_fl_estimado dg
+JOIN (SELECT DISTINCT diocese_id FROM vistas.b_edm_ss_sa b) j
+     USING (diocese_id)
+     WHERE pais = 'Spain')
+AND pais = 'Spain';
+
+SELECT diocese_id, diocese_name, COUNT(*)
+FROM vistas.bishops_individuals_edm_op b
+JOIN
+(SELECT diocese_id FROM mayoresrentas) r USING (diocese_id)
+GROUP BY 1, 2;
+
+SELECT diocese_id, diocese_name,
+       EXTRACT(century FROM date_nomination) AS siglo,
+       COUNT(*) AS total
+FROM vistas.bishops_individuals_edm_op b
+     JOIN
+        (SELECT diocese_id FROM mayoresrentas) r
+     USING (diocese_id)
+GROUP BY 1, 2, 3
+ORDER BY diocese_name;
