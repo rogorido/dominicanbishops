@@ -86,6 +86,22 @@ Desc(ops_edm_generaldata$anos ~ factor(ops_edm_generaldata$ordinal))
 sql <- getSQL("../sql/edm/aggdioceses_edm.sql")
 aggdioceses <- dbGetQuery(con, sql)
 
+# nos muestra una pequeña tabla conle número de diocesis con 1, 2, 3, obispos
+aggdioceses %>%
+    group_by(factor(total))%>%
+    summarise(cuantos = n())
+
+# lo mismo pero como historiograma
+p<- aggdioceses %>%
+    ggplot(., aes(x=factor(total))) +
+    geom_bar(fill = "#a12828") +
+    labs(x = "Presence in # of dioceses",
+         y = "# of persons") +
+    theme_sosa()
+
+ggsave(p, filename= 'bishops_number_dioceses.png',
+       path = dir_edm)
+
 ## ITaly
 
 italy_number_dioceses <- aggdioceses %>%

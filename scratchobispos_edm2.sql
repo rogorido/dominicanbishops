@@ -1272,3 +1272,40 @@ FROM vistas.bishops_individuals_edm_op b
      USING (diocese_id)
 GROUP BY 1, 2, 3
 ORDER BY diocese_name;
+
+
+SELECT diocese_id, diocese_name, COUNT(*)
+FROM vistas.bishops_individuals_edm_op b
+JOIN
+(SELECT diocese_id FROM mayoresrentas) r USING (diocese_id)
+GROUP BY 1, 2;
+
+
+WITH anyos AS (
+      SELECT generate_series(1500, 1799, 1) AS serie),
+d AS
+      (SELECT DISTINCT b.diocese_id FROM vistas.bishops_individuals_edm_op b
+       JOIN italia USING (diocese_id)
+       JOIN places P USING (place_id)
+       WHERE oppresence = 'conops' )
+SELECT serie, d.diocese_id,
+       dd.diocese_name
+       bishops_order_per_year_edm_per_dioceses(serie, d.diocese_id, 121) AS total
+FROM anyos, d
+JOIN dioceses dd USING (diocese_id);
+JOIN places P USING (place_id);
+
+
+WITH anyos AS (
+      SELECT generate_series(1500, 1799, 1) AS serie),
+d AS
+      (SELECT DISTINCT b.diocese_id FROM vistas.bishops_individuals_edm_op b
+       JOIN italia USING (diocese_id)),
+junto AS (
+SELECT serie, d.diocese_id,
+       bishops_order_per_year_edm_per_dioceses(serie, d.diocese_id, 121) AS total
+FROM anyos, d)
+SELECT serie, SUM(total)
+FROM junto
+GROUP BY 1
+ORDER BY serie;

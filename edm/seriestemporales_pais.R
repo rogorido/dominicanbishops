@@ -30,6 +30,11 @@ c_balcans_without_turkey <- c("Bosnia and Herzegovina", "Croacia", "Slovenia",
                "Montenegro", "Greece", "Albania", "Cyprus", "Macedonia",
                "Serbia")
 
+c_balcans_no_turk_no_greece <- c("Bosnia and Herzegovina", "Croacia", "Slovenia",
+               "Montenegro", "Albania", "Cyprus", "Macedonia",
+               "Serbia")
+
+
 c_ottomans <- c("Bosnia and Herzegovina", "Montenegro", "Greece",
                 "Albania", "Macedonia", "Serbia", "Israel", "Palestina",
                 "Egypt", "Jordania", "Lebanon", "Libia", "Syria", "Tunisia")
@@ -193,10 +198,30 @@ p <- op_series_edm %>%
 ggsave(p, filename= 'series_balcans_without_turkey.png',
        path = dir_edm)
 
+# Balcnas sin turquía y sin Grecia
+op_series_edm$countrycollapsed <- op_series_edm$country
+op_series_edm$countrycollapsed <-
+    fct_collapse(op_series_edm$countrycollapsed,
+                 balcans_no_turk_no_greece = c_balcans_no_turk_no_greece)
+
+p <- op_series_edm %>%
+    filter(countrycollapsed == "balcans_no_turk_no_greece") %>%
+    group_by(serie, countrycollapsed) %>%
+    summarise(total = sum(totalobispos))%>%
+    na_if(0) %>%
+    ggplot(., aes(x=serie, y= total)) +
+    geom_line(size = 1.3, color = "#a12828") +
+        labs(x = element_blank(),
+         y = "# of bishops") +
+    theme_sosa()
+#    scale_y_continuous(limits=c(0, 25))
+
+ggsave(p, filename= 'series_balcans_without_turkey.png',
+       path = dir_edm)
+
 
 # Balcnas por países sin Turquía 
 op_series_edm$countrycollapsed <- op_series_edm$country
-
 p <- op_series_edm %>%
     filter(countrycollapsed %in% c_balcans_without_turkey) %>%
     group_by(serie, countrycollapsed) %>%
@@ -409,4 +434,39 @@ p <- op_series_edm %>%
 #    scale_y_continuous(limits=c(0, 25))
 
 ggsave(p, filename= 'series_irland_countries.png',
+       path = dir_edm)
+
+
+# Italy
+op_series_edm$countrycollapsed <- op_series_edm$country
+p <- op_series_edm %>%
+    filter(countrycollapsed == "Italy") %>%
+    group_by(serie, countrycollapsed) %>%
+    summarise(total = sum(totalobispos))%>%
+    na_if(0) %>%
+    ggplot(., aes(x=serie, y= total)) +
+    geom_line(size = 1.3, color = "#a12828") +
+        labs(x = element_blank(),
+         y = "# of bishops") +
+    theme_sosa()
+#    scale_y_continuous(limits=c(0, 25))
+
+ggsave(p, filename= 'series_spainglobal.png',
+       path = dir_edm)
+
+
+# Sur de Italia
+# esto se hace con una talba especial q tengo en italia.sql
+sql <- getSQL("../sql/edm/series_temporales_edm_per_diocesis_surdeitalia.sql")
+op_series_suritalia <- dbGetQuery(con, sql)
+
+p <- op_series_suritalia %>%
+    ggplot(., aes(x=serie, y= totalanyo)) +
+    geom_line(size = 1.3, color = "#a12828") +
+        labs(x = element_blank(),
+         y = "# of bishops") +
+    theme_sosa()
+#    scale_y_continuous(limits=c(0, 25))
+
+ggsave(p, filename= 'series_suritalia.png',
        path = dir_edm)
