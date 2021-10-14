@@ -198,6 +198,25 @@ p <- op_series_edm %>%
 ggsave(p, filename= 'series_balcans_without_turkey.png',
        path = dir_edm)
 
+# Greece
+op_series_edm$countrycollapsed <- op_series_edm$country
+
+p <- op_series_edm %>%
+    filter(countrycollapsed == "Greece") %>%
+    group_by(serie, countrycollapsed) %>%
+    summarise(total = sum(totalobispos))%>%
+    na_if(0) %>%
+    ggplot(., aes(x=serie, y= total)) +
+    geom_line(size = 1.3, color = "#a12828") +
+        labs(x = element_blank(),
+         y = "# of bishops") +
+    theme_sosa()
+#    scale_y_continuous(limits=c(0, 25))
+
+ggsave(p, filename= 'series_balcans_without_turkey.png',
+       path = dir_edm)
+
+
 # Balcnas sin turquía y sin Grecia
 op_series_edm$countrycollapsed <- op_series_edm$country
 op_series_edm$countrycollapsed <-
