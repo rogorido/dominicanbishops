@@ -2,7 +2,7 @@
 
 SELECT b.diocese_name, p.country, b.longitude, b.latitude,
        COUNT(*) AS total
-FROM vistas.bishops_individuals_edm_op b
+FROM vistas.bishops_individuals_cnf_op b
 JOIN dioceses d USING (diocese_id)
 LEFT JOIN places P USING (place_id)
 WHERE b.longitude IS NOT null

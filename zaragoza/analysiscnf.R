@@ -12,19 +12,19 @@ con <- dbConnect(drv= "PostgreSQL",
                  dbname = "dominicos",
                  user="igor", host="localhost")
 
-setwd("/home/igor/geschichte/artikel/obisposdominicos/analisis/edm")
+setwd("/home/igor/geschichte/artikel/obisposdominicos/analisis/zaragoza")
 source("../functions.R")
-source("./owntheme_edm.R")
+source("./owntheme_cnf.R")
 source("./variables.R")
 
-dir_edm = "/home/igor/geschichte/artikel/obisposdominicos/analisis/plots/edadmoderna"
+dir_cnf = "/home/igor/geschichte/artikel/obisposdominicos/analisis/plots/cnf"
 
 #######################################
 # seculars vs non seculares
 #######################################
 
 ## atención estos datos están mal pq está contando los obispos varias veces
-sql <- getSQL("../sql/edm/typebishops_edm.sql")
+sql <- getSQL("../sql/cnf/typebishops_cnf.sql")
 typebishops <- dbGetQuery(con, sql)
 
 p <- ggplot(typebishops, aes(x= bishoptype, y=total)) +
@@ -37,45 +37,45 @@ typebishops$percentage <- typebishops$total * 100 /
     sum(typebishops$total)
 
 ggsave(p, filename= 'type_bishops.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 #######################################
 # datos generales de obispos OPs con sus duraciones 
 #######################################
 
-sql <- "SELECT * from vistas.bishops_individuals_edm_op;"
-ops_edm_generaldata <- dbGetQuery(con, sql)
+sql <- "SELECT * from vistas.bishops_individuals_cnf_op;"
+ops_cnf_generaldata <- dbGetQuery(con, sql)
 
 # historiograma 
-p <- ggplot(ops_edm_generaldata, aes(x=anos)) +
+p <- ggplot(ops_cnf_generaldata, aes(x=anos)) +
     geom_histogram(fill = "#a12828") +
     labs(x = "# of years",
          y = "# of persons") +
     theme_sosa()
     
 ggsave(p, filename= 'histogram_no_years.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 # función cumulativa 
-ggplot(ops_edm_generaldata, aes(x=anos)) + stat_ecdf(geom = "step")
+ggplot(ops_cnf_generaldata, aes(x=anos)) + stat_ecdf(geom = "step")
 
 # los valores
-anos.ecdf <- ecdf(ops_edm_generaldata$anos)
+anos.ecdf <- ecdf(ops_cnf_generaldata$anos)
 
 # y así podemos saber dónde está pej los diez años
 anos.ecdf(10)
-# [1] 0.6129754
+# [1] 0.6796117
 anos.ecdf(c(1:3))
-# [1] 0.06040268 0.13870246 0.21252796
+# [1] 0.07119741 0.17152104 0.26537217
 
-quantile(ops_edm_generaldata$anos, probs = seq(0,1,0.1),
+quantile(ops_cnf_generaldata$anos, probs = seq(0,1,0.1),
          na.rm =TRUE )                                                              
 
-quantile(ops_edm_generaldata$anos,
+quantile(ops_cnf_generaldata$anos,
          na.rm =TRUE )
 
-Desc(ops_edm_generaldata$anos)
-Desc(ops_edm_generaldata$anos ~ factor(ops_edm_generaldata$ordinal))
+Desc(ops_cnf_generaldata$anos)
+Desc(ops_cnf_generaldata$anos ~ factor(ops_cnf_generaldata$ordinal))
 
 # hacer ttest entrer OPs y seculares?
 
@@ -83,7 +83,7 @@ Desc(ops_edm_generaldata$anos ~ factor(ops_edm_generaldata$ordinal))
 # dioceses con nº de OPs obispos 
 #######################################
 
-sql <- getSQL("../sql/edm/aggdioceses_edm.sql")
+sql <- getSQL("../sql/cnf/aggdioceses_cnf.sql")
 aggdioceses <- dbGetQuery(con, sql)
 
 # nos muestra una pequeña tabla conle número de diocesis con 1, 2, 3, obispos
@@ -100,7 +100,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'bishops_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 ## ITaly
 
@@ -118,7 +118,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'italy_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -139,7 +139,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'france_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -160,7 +160,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'ireland_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -182,7 +182,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'spain_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -203,7 +203,7 @@ p<- aggdioceses %>%
     theme_sosa()
 
 ggsave(p, filename= 'america_number_dioceses.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 aggdioceses_sf <- st_as_sf(aggdioceses,
                           coords = c("longitude", "latitude"),
@@ -215,7 +215,7 @@ st_write(aggdioceses_sf, "aggdioceses_sf.geojson", append = FALSE)
 # sumamos los años q están en cada 
 #######################################
 
-sql <- getSQL("../sql/totalyears.sql")
+sql <- getSQL("../sql/cnf/totalyears.sql")
 totalyears <- dbGetQuery(con, sql)
 
 totalyears.agg <-
@@ -242,7 +242,7 @@ st_write(totalyears_sf, "totalyears_sf.geojson", append = FALSE)
 # en el número de diócesis q están 
 #######################################
 
-sql <- getSQL("../sql/edm/numberindioceses_edm.sql")
+sql <- getSQL("../sql/cnf/numberindioceses_cnf.sql")
 numberindioceses <- dbGetQuery(con, sql)
 
 # coger? 
@@ -253,7 +253,7 @@ p<- ggplot(numberindioceses, aes(x=factor(total))) +
     theme_sosa()
 
 ggsave(p, filename= 'number_dioceses_seguidas.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 Desc(numberindioceses$total)
 
@@ -267,10 +267,10 @@ moredioceses <- dbGetQuery(con, sql)
 ggplot(moredioceses, aes(x=factor(total))) + geom_bar()
 
 #######################################
-# análisis más detallado de los q están en 2 (q son 87)
+# análisis más detallado de los q están en 2
 #######################################
 
-sql <- getSQL("../sql/edm/bishopsin2dioceses_edm.sql")
+sql <- getSQL("../sql/cnf/bishopsin2dioceses_cnf.sql")
 intwodioceses <- dbGetQuery(con, sql)
 
 intwodioceses$diocese_name <- factor(intwodioceses$diocese_name)
@@ -300,36 +300,28 @@ st_write(italy_sf, "italy_sf.geojson", append = FALSE)
 
 
 #######################################
-# lo de bizancio, pero habría q mirarlo otra vez 
-#######################################
-
-sql <- "SELECT * from analysis.bishops_bizantium_per_decade"
-obispos_bizancio_decada <- dbGetQuery(con, sql)
-ggplot(obispos_bizancio_decada, aes(x= r_from, y= total)) + geom_bar(stat="identity")
-
-#######################################
 # otra vez series temporales  por paises
 #######################################
 
-sql <- getSQL("../sql/edm/series_temporales_edm_op.sql")
-op_series_edm <- dbGetQuery(con, sql)
-op_series_edm$country <- factor(op_series_edm$country)
+sql <- getSQL("../sql/cnf/series_temporales_cnf_op.sql")
+op_series_cnf <- dbGetQuery(con, sql)
+op_series_cnf$country <- factor(op_series_cnf$country)
 
-op_series_edm_agg <- op_series_edm %>%
+op_series_cnf_agg <- op_series_cnf %>%
         group_by(serie) %>%
         summarise(total = sum(totalobispos))
 
-p <-ggplot(op_series_edm_agg, aes(x=serie, y= total)) +
+p <-ggplot(op_series_cnf_agg, aes(x=serie, y= total)) +
     geom_line(size = 1.6, color = "#a12828") +
     labs(x = element_blank(),
          y = "# of bishops") +
     theme_sosa()
 
 ggsave(p, filename= 'series_op_general.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 # Italia 
-p <- op_series_edm %>%
+p <- op_series_cnf %>%
     filter(country == "Italy") %>%
     na_if(0) %>%
     ggplot(., aes(x=serie, y= totalobispos)) +
@@ -339,10 +331,10 @@ p <- op_series_edm %>%
     theme_sosa()
 
 ggsave(p, filename= 'series_italy.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 # España  
-p <- op_series_edm %>%
+p <- op_series_cnf %>%
     filter(country == "Spain") %>%
     na_if(0) %>%
     ggplot(., aes(x=serie, y= totalobispos)) +
@@ -353,12 +345,12 @@ p <- op_series_edm %>%
     scale_y_continuous(limits=c(0, 25))
 
 ggsave(p, filename= 'spain_series.png',
-       path = dir_edm)
+       path = dir_cnf)
 
 
 
 # otra versión de lo mismo pero con wrap 
-op_series_edm %>%
+op_series_cnf %>%
     filter(country %in% c("Spain", "France", "Italy", "Germany")) %>%
     na_if(0) %>%
     ggplot(., aes(x=serie, y= totalobispos)) +
@@ -372,7 +364,7 @@ op_series_edm %>%
     theme(text = element_text(size = 20))  +
     theme(panel.grid.major.y = element_line(colour = "grey80"))
 
-op_series_edm %>%
+op_series_cnf %>%
     filter(country == "Portugal") %>%
     na_if(0) %>%
     ggplot(., aes(x=serie, y= totalobispos)) +
@@ -387,7 +379,7 @@ op_series_edm %>%
     theme(panel.grid.major.y = element_line(colour = "grey80"))
 
 
-op_series_edm %>%
+op_series_cnf %>%
     filter(country == "Ireland") %>%
     na_if(0) %>%
     ggplot(., aes(x=serie, y= totalobispos)) +
@@ -401,7 +393,7 @@ op_series_edm %>%
     theme(text = element_text(size = 20))  +
     theme(panel.grid.major.y = element_line(colour = "grey80"))
 
-op_series_edm %>%
+op_series_cnf %>%
     filter(country %in% c("Ireland", "Great Britain",
                           "Norway", "Denmark", "Sweden")) %>%
     na_if(0) %>%
@@ -422,11 +414,11 @@ op_series_edm %>%
 #######################################
 # otra vez series temporales  por diócesis 
 #######################################
-sql <- getSQL("../sql/edm/series_temporales_edm_op_diocesis.sql")
-op_series_edm <- dbGetQuery(con, sql)
-op_series_edm$country <- factor(op_series_edm$country)
+sql <- getSQL("../sql/cnf/series_temporales_cnf_op_diocesis.sql")
+op_series_cnf <- dbGetQuery(con, sql)
+op_series_cnf$country <- factor(op_series_cnf$country)
 
-op_series_edm_agg <- op_series_edm %>%
+op_series_cnf_agg <- op_series_cnf %>%
         group_by(serie) %>%
         summarise(total = sum(totalobispos))
 
@@ -435,7 +427,7 @@ op_series_edm_agg <- op_series_edm %>%
 # para ver en un mapa en qué diócesis están
 # y qen qué diócesis no están 
 #######################################
-sql <- getSQL("../sql/edm/ops_bool_perdiocesis.sql")
+sql <- getSQL("../sql/cnf/ops_bool_perdiocesis.sql")
 rs = dbSendQuery(con, sql, params = list("Italy"))
 ops_bool_perdiocesis <- dbFetch(rs)
 dbClearResult(rs)

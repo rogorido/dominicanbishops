@@ -3,5 +3,5 @@ SELECT CASE
        WHEN religious_order IS NULL THEN 'Secular'
        END AS bishoptype,
        COUNT(*) AS total 
-FROM vistas.b_edm_cs_sa
+FROM vistas.b_cnf_cs_sa
 GROUP BY bishoptype;

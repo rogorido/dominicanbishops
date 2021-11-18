@@ -4,7 +4,7 @@ WITH series AS
       SELECT r_from, (r_from + 9) AS r_to FROM series)
 SELECT r_from, r_to, p.country, COUNT(date_nomination) AS total
 FROM rango
-JOIN vistas.bishops_individuals_edm_op b
+JOIN vistas.bishops_individuals_cnf_op b
      ON  extract(year from date_nomination) BETWEEN r_from AND r_to
 JOIN dioceses USING (diocese_id)
 JOIN places P USING (place_id)

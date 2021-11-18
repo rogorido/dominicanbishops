@@ -1,4 +1,4 @@
-1SELECT * FROM vistas.dioceses_rents;
+SELECT * FROM vistas.dioceses_rents;
 
 SELECT DISTINCT b.diocese_id, b.diocese_name
 FROM vistas.bishops_individuals_edm_op b
@@ -1309,3 +1309,35 @@ SELECT serie, SUM(total)
 FROM junto
 GROUP BY 1
 ORDER BY serie;
+
+DROP VIEW IF EXISTS qgis.anyostotales_cnf;
+CREATE OR REPLACE VIEW qgis.anyostotales_cnf AS
+SELECT diocese_id, diocese_name,
+       st_transform(ST_SetSRID(ST_MakePoint(longitude, latitude),4326), 54030) AS geom,
+       SUM(anos) AS total,
+       SUM(anos) / 90 AS porcentaje,
+       ROW_NUMBER() OVER() AS myid -- esto hace falta tvz por qgis
+FROM vistas.bishops_individuals_cnf_op b
+group BY 1,2,3
+ORDER BY SUM(anos);
+
+
+  DROP VIEW IF EXISTS qgis.porcentajes_ops_cnf;
+  CREATE or replace VIEW qgis.porcentajes_ops_cnf AS
+  WITH j AS
+  (SELECT diocese_id, COUNT(*) AS totalobispos,
+         COUNT(*) FILTER  (WHERE religious_order IS NOT NULL) AS nonsecular,
+         COUNT(*) FILTER  (WHERE religious_order = 'O.P.') AS ops
+  FROM vistas.b_cnf_cs_sa
+  GROUP BY 1)
+  SELECT diocese_id, diocese_name,
+         st_transform(ST_SetSRID(ST_MakePoint(P.longitude, P.latitude),4326), 54030) AS coord,
+         totalobispos, nonsecular, ops,
+         nonsecular::REAL / totalobispos::REAL AS porcentajefrailes,
+         ops::REAL / totalobispos::REAL AS porcentajeopscontotales,
+         ops::REAL / NULLIF(nonsecular::REAL,0) AS porcentajeopsconfrailes,
+         p.country,
+         ROW_NUMBER() OVER() AS myid -- esto hace falta tvz por qgis
+  FROM j
+  LEFT JOIN dioceses USING (diocese_id)
+  LEFT JOIN places P USING (place_id);

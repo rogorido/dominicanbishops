@@ -7,10 +7,11 @@ WITH j AS
 (SELECT b.diocese_name, p.country,
        st_transform(ST_SetSRID(ST_MakePoint(b.longitude, b.latitude),4326), 54030) AS coord,
        COUNT(*) AS total
-FROM vistas.bishops_individuals_edm_op b
+FROM vistas.bishops_individuals_cnf_op b
 JOIN dioceses d USING (diocese_id)
 LEFT JOIN places P USING (place_id)
 WHERE b.longitude IS NOT null
 GROUP BY 1,2,3
 ORDER BY COUNT(*) DESC)
 SELECT * FROM j;
+
